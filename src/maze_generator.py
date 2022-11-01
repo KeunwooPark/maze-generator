@@ -1,5 +1,4 @@
 import random
-import typing
 import numpy as np
 from scipy import ndimage
 
@@ -47,7 +46,9 @@ def create_coarse_maze(
         path_coverage < coarse_path_min_coverage
         and coarse_map_trial_count < max_coarse_map_trial
     ):
-        coarse_maze = create_random_coarse_maze()
+        coarse_maze = create_random_coarse_maze(
+            num_coarse_col_cells, num_coarse_row_cells
+        )
         path_coverage = calculate_path_coverage(coarse_maze)
         coarse_map_trial_count += 1
 
@@ -97,7 +98,7 @@ def create_random_coarse_maze(
 
 def select_next_random_cell(
     maze: np.ndarray, current_row: int, current_col: int
-) -> typing.Tuple(int, int):
+) -> tuple[int, int]:
     """Select a random cell that is not visited, not adjacent to the visited cells, and not at the boundary"""
 
     valid_next_cells: list[(int, int)] = []
@@ -203,7 +204,10 @@ def cross_connect_components(maze: np.ndarray) -> np.ndarray:
 def iteratively_attach_walls(
     maze: np.ndarray, steps: int, min_path_width: int
 ) -> np.ndarray:
-    maze_A, maze_B = split_components(maze)
+
+    labeled_maze, num_features = ndimage.label(maze)
+
+    maze_A, maze_B = split_components(maze, labeled_maze)
     iter_count = 0
     while iter_count < steps:
         maze_A, maze_B = add_random_wall_point(
@@ -218,7 +222,7 @@ def iteratively_attach_walls(
 
 def split_components(
     maze: np.ndarray, labeled_maze: np.ndarray
-) -> typing.Tuple(np.ndarray, np.ndarray):
+) -> tuple[np.ndarray, np.ndarray]:
     # ensure paths are 0 and the other compoents are >0
     binary_maze = maze * (labeled_maze + 1)
     labels = np.unique(binary_maze)
@@ -233,7 +237,7 @@ def split_components(
     return (maze_A, maze_B)
 
 
-def select_random_boundary_points(maze: np.ndarray) -> list[(int, int)]:
+def select_boundary_points(maze: np.ndarray) -> list[(int, int)]:
 
     cross_kernel = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
     kernel_sum = np.sum(cross_kernel)
@@ -252,25 +256,30 @@ def select_random_boundary_points(maze: np.ndarray) -> list[(int, int)]:
     return list(boundary_points)
 
 
-def select_random_boundary_point(component_maze: np.ndarray) -> typing.Tuple(int, int):
-    boundary_points = select_random_boundary_points(component_maze)
+def select_random_boundary_point(component_maze: np.ndarray) -> tuple[int, int]:
+    boundary_points = select_boundary_points(component_maze)
+    if len(boundary_points) == 0:
+        return None
     return random.choice(boundary_points)
 
 
 def calculate_min_dist_to_point(maze: np.ndarray, row: int, col: int) -> int:
-    boundary_points = select_random_boundary_points(maze)
+    boundary_points = select_boundary_points(maze)
     distances = [abs(row - point[0]) + abs(col - point[1]) for point in boundary_points]
     return min(distances)
 
 
 def add_random_wall_point(
     maze_A: np.ndarray, maze_B: np.ndarray, min_path_width: float
-) -> typing.Tuple(np.ndarray, np.ndarray):
+) -> tuple[np.ndarray, np.ndarray]:
     maze_to_add_point = random.choice([maze_A, maze_B])
     add_point_to_maze_A = maze_to_add_point is maze_A
     other_maze = maze_A if maze_to_add_point is maze_B else maze_B
 
     random_boudary_point = select_random_boundary_point(maze_to_add_point)
+
+    if random_boudary_point is None:
+        return (maze_A, maze_B)
 
     min_dist_to_point = calculate_min_dist_to_point(
         other_maze, random_boudary_point[0], random_boudary_point[1]
