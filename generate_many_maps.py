@@ -27,14 +27,14 @@ def parse_args():
     parser.add_argument(
         "--coarse-path-min-coverage",
         type=float,
-        default=0.3,
+        default=0.1,
         help="Coarse path min coverage",
     )
     parser.add_argument(
         "--max-coarse-map-trial",
         type=int,
-        default=10000,
-        help="Max coarse map trial",
+        default=-1,
+        help="Max coarse map trial. -1 for no limit",
     )
     parser.add_argument(
         "--wall-attach-steps",
@@ -51,7 +51,7 @@ def parse_args():
     parser.add_argument(
         "--num-maps",
         type=int,
-        default=100,
+        default=1000,
         help="Number of maps to generate",
     )
     parser.add_argument(

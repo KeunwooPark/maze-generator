@@ -1,6 +1,7 @@
 import random
 import numpy as np
 from scipy import ndimage
+from matplotlib import pyplot as plt
 
 
 def create_maze(
@@ -42,9 +43,10 @@ def create_coarse_maze(
 
     coarse_map_trial_count = 0
 
-    while (
-        path_coverage < coarse_path_min_coverage
-        and coarse_map_trial_count < max_coarse_map_trial
+    no_limit = max_coarse_map_trial == -1
+
+    while path_coverage < coarse_path_min_coverage and (
+        no_limit or coarse_map_trial_count < max_coarse_map_trial
     ):
         coarse_maze = create_random_coarse_maze(
             num_coarse_col_cells, num_coarse_row_cells
@@ -70,17 +72,21 @@ def create_random_coarse_maze(
     # always the left top cell is the start
     entry_row = 1
     entry_col = 0
-
     coarse_maze[entry_row, entry_col] = 0
     cursor = (entry_row, entry_col)
     backtracking_stack = [cursor]
 
+    # then there is only one possible step
+    coarse_maze[entry_row, entry_col + 1] = 0
+    cursor = (entry_row, entry_col + 1)
+
+    ### CUROSOR DOES NOT POINT A CELL IN THE BACKTRACKING STACK
     while True:
         next_cell = select_next_random_cell(coarse_maze, cursor[0], cursor[1])
-        if next_cell:
+        if next_cell is not None:
             coarse_maze[next_cell[0], next_cell[1]] = 0
-            cursor = next_cell
             backtracking_stack.append(cursor)
+            cursor = next_cell
 
             if is_on_the_map_boundary(coarse_maze, cursor[0], cursor[1]):
                 # cursor is on the edge of the map
@@ -89,9 +95,12 @@ def create_random_coarse_maze(
         else:
             # DFS fail
             # backtrack
+
+            if len(backtracking_stack) == 0:
+                raise Exception("Failed to create a coarse maze. DFS fail.")
+
             coarse_maze[cursor[0], cursor[1]] = 1
             cursor = backtracking_stack.pop()
-            break
 
     return coarse_maze
 
@@ -101,8 +110,6 @@ def select_next_random_cell(
 ) -> tuple[int, int]:
     """Select a random cell that is not visited, not adjacent to the visited cells, and not at the boundary"""
 
-    valid_next_cells: list[(int, int)] = []
-
     def is_cell_valid(row: int, col: int) -> bool:
         return (
             is_in_the_map(maze, row, col)
@@ -110,18 +117,18 @@ def select_next_random_cell(
             and is_not_adjacent_to_visited(maze, current_row, current_col, row, col)
         )
 
+    valid_next_cells: list[(int, int)] = []
+    candiates = [
+        (current_row - 1, current_col),
+        (current_row + 1, current_col),
+        (current_row, current_col - 1),
+        (current_row, current_col + 1),
+    ]
+
     # check 4 adjacent cells
-    if is_cell_valid(current_row - 1, current_col):
-        valid_next_cells.append((current_row - 1, current_col))
-
-    if is_cell_valid(current_row + 1, current_col):
-        valid_next_cells.append((current_row + 1, current_col))
-
-    if is_cell_valid(current_row, current_col + 1):
-        valid_next_cells.append((current_row, current_col + 1))
-
-    if is_cell_valid(current_row, current_col - 1):
-        valid_next_cells.append((current_row, current_col - 1))
+    for row, col in candiates:
+        if is_cell_valid(row, col):
+            valid_next_cells.append((row, col))
 
     if len(valid_next_cells) == 0:
         return None
@@ -198,7 +205,7 @@ def cross_connect_components(maze: np.ndarray) -> np.ndarray:
     kernal = np.array([[1, 0, 1], [0, 1, 0], [1, 0, 1]])
     cross_connected_maze = ndimage.convolve(maze, kernal, mode="constant", cval=0)
     cross_connected_maze[cross_connected_maze > 0] = 1
-    return maze
+    return cross_connected_maze
 
 
 def iteratively_attach_walls(
@@ -208,6 +215,16 @@ def iteratively_attach_walls(
     labeled_maze, num_features = ndimage.label(maze)
 
     maze_A, maze_B = split_components(maze, labeled_maze)
+
+    # fig, axs = plt.subplots(1, 3)
+    # axs[0].set_title("maze")
+    # axs[1].set_title("maze_A")
+    # axs[2].set_title("maze_B")
+    # axs[0].imshow(maze, cmap="gray")
+    # axs[1].imshow(maze_A, cmap="gray")
+    # axs[2].imshow(maze_B, cmap="gray")
+    # plt.show()
+
     iter_count = 0
     while iter_count < steps:
         maze_A, maze_B = add_random_wall_point(
