@@ -80,12 +80,20 @@ def create_random_coarse_maze(
     coarse_maze[entry_row, entry_col + 1] = 0
     cursor = (entry_row, entry_col + 1)
 
+    # the backtrack point is used to avoid re-selecting the backtracked cells.
+    backtrack_point = (-1, -1)
+
     ### CUROSOR DOES NOT POINT A CELL IN THE BACKTRACKING STACK
     while True:
         prev_cell = backtracking_stack[-1]
+        # TODO: prevernt infinite loop
         next_cell = select_next_random_cell(
-            coarse_maze, cursor[0], cursor[1], prev_cell[0], prev_cell[1]
+            coarse_maze, cursor[0], cursor[1], backtrack_point[0], backtrack_point[1]
         )
+
+        # reset the backtrack point after using it to prevent infinite loop
+        backtrack_point = (-1, -1)
+
         if next_cell is not None:
             coarse_maze[next_cell[0], next_cell[1]] = 0
             backtracking_stack.append(cursor)
@@ -102,6 +110,7 @@ def create_random_coarse_maze(
             if len(backtracking_stack) == 0:
                 raise Exception("Failed to create a coarse maze. DFS fail.")
 
+            backtrack_point = (cursor[0], cursor[1])
             coarse_maze[cursor[0], cursor[1]] = 1
             cursor = backtracking_stack.pop()
 
