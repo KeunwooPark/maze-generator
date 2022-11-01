@@ -82,7 +82,10 @@ def create_random_coarse_maze(
 
     ### CUROSOR DOES NOT POINT A CELL IN THE BACKTRACKING STACK
     while True:
-        next_cell = select_next_random_cell(coarse_maze, cursor[0], cursor[1])
+        prev_cell = backtracking_stack[-1]
+        next_cell = select_next_random_cell(
+            coarse_maze, cursor[0], cursor[1], prev_cell[0], prev_cell[1]
+        )
         if next_cell is not None:
             coarse_maze[next_cell[0], next_cell[1]] = 0
             backtracking_stack.append(cursor)
@@ -106,13 +109,18 @@ def create_random_coarse_maze(
 
 
 def select_next_random_cell(
-    maze: np.ndarray, current_row: int, current_col: int
+    maze: np.ndarray,
+    current_row: int,
+    current_col: int,
+    exclude_row: int = -1,
+    exclude_col: int = -1,
 ) -> tuple[int, int]:
     """Select a random cell that is not visited, not adjacent to the visited cells, and not at the boundary"""
 
     def is_cell_valid(row: int, col: int) -> bool:
         return (
-            is_in_the_map(maze, row, col)
+            (row != exclude_row and col != exclude_col)
+            and is_in_the_map(maze, row, col)
             and is_not_visited(maze, row, col)
             and is_not_adjacent_to_visited(maze, current_row, current_col, row, col)
         )
