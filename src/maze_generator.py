@@ -271,34 +271,34 @@ def split_components(
     return (maze_A, maze_B)
 
 
-def select_boundary_points(maze: np.ndarray) -> list[(int, int)]:
+def select_near_boundary_points(maze: np.ndarray) -> list[(int, int)]:
 
     cross_kernel = np.array([[0, 1, 0], [1, 1, 1], [0, 1, 0]])
     kernel_sum = np.sum(cross_kernel)
 
     conved_maze = ndimage.convolve(maze, cross_kernel, mode="constant", cval=1)
 
-    boundary_points = np.argwhere((conved_maze < kernel_sum) & (conved_maze > 0))
+    near_boundary_points = np.argwhere((conved_maze < kernel_sum) & (conved_maze > 0))
 
     # exclude the map boundary
-    boundary_points = filter(
-        lambda x: not is_on_the_map_boundary(maze, x[0], x[1]), boundary_points
+    near_boundary_points = filter(
+        lambda x: not is_on_the_map_boundary(maze, x[0], x[1]), near_boundary_points
     )
     # exclude the walls
-    boundary_points = filter(lambda x: maze[x[0], x[1]] == 0, boundary_points)
+    near_boundary_points = filter(lambda x: maze[x[0], x[1]] == 0, near_boundary_points)
 
-    return list(boundary_points)
+    return list(near_boundary_points)
 
 
-def select_random_boundary_point(component_maze: np.ndarray) -> tuple[int, int]:
-    boundary_points = select_boundary_points(component_maze)
-    if len(boundary_points) == 0:
+def select_random_near_boundary_point(component_maze: np.ndarray) -> tuple[int, int]:
+    near_boundary_points = select_near_boundary_points(component_maze)
+    if len(near_boundary_points) == 0:
         return None
-    return random.choice(boundary_points)
+    return random.choice(near_boundary_points)
 
 
 def calculate_min_dist_to_point(maze: np.ndarray, row: int, col: int) -> int:
-    boundary_points = select_boundary_points(maze)
+    boundary_points = select_near_boundary_points(maze)
     distances = [abs(row - point[0]) + abs(col - point[1]) for point in boundary_points]
     return min(distances)
 
@@ -310,13 +310,13 @@ def add_random_wall_point(
     add_point_to_maze_A = maze_to_add_point is maze_A
     other_maze = maze_A if maze_to_add_point is maze_B else maze_B
 
-    random_boudary_point = select_random_boundary_point(maze_to_add_point)
+    random_near_boudary_point = select_random_near_boundary_point(maze_to_add_point)
 
-    if random_boudary_point is None:
+    if random_near_boudary_point is None:
         return (maze_A, maze_B)
 
     min_dist_to_point = calculate_min_dist_to_point(
-        other_maze, random_boudary_point[0], random_boudary_point[1]
+        other_maze, random_near_boudary_point[0], random_near_boudary_point[1]
     )
 
     if min_dist_to_point < min_path_width:
@@ -325,8 +325,8 @@ def add_random_wall_point(
     copied_maze_A = maze_A.copy()
     copied_maze_B = maze_B.copy()
     if add_point_to_maze_A:
-        copied_maze_A[random_boudary_point[0], random_boudary_point[1]] = 1
+        copied_maze_A[random_near_boudary_point[0], random_near_boudary_point[1]] = 1
     else:
-        copied_maze_B[random_boudary_point[0], random_boudary_point[1]] = 1
+        copied_maze_B[random_near_boudary_point[0], random_near_boudary_point[1]] = 1
 
     return copied_maze_A, copied_maze_B
