@@ -29,7 +29,7 @@ def create_maze(
         min_path_width,
     )
 
-    return maze
+    return maze.astype(np.uint8)
 
 
 def create_coarse_maze(

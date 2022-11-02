@@ -9,13 +9,13 @@ def parse_args():
     parser.add_argument(
         "--num-coarse-row-cells",
         type=int,
-        default=10,
+        default=20,
         help="Number of coarse row cells",
     )
     parser.add_argument(
         "--num-coarse-col-cells",
         type=int,
-        default=10,
+        default=20,
         help="Number of coarse column cells",
     )
     parser.add_argument(
@@ -77,7 +77,7 @@ def main(args):
             args.wall_attach_steps,
             args.min_path_width,
         )
-        np.savetxt(f"{args.output_dir}/maze_{i}.csv", maze, delimiter=",")
+        np.savetxt(f"{args.output_dir}/maze_{i}.csv", maze, fmt="%i", delimiter=",")
         print(f"Generated maze_{i}.csv")
 
 
