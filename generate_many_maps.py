@@ -9,13 +9,13 @@ def parse_args():
     parser.add_argument(
         "--num-coarse-row-cells",
         type=int,
-        default=20,
+        default=10,
         help="Number of coarse row cells",
     )
     parser.add_argument(
         "--num-coarse-col-cells",
         type=int,
-        default=20,
+        default=10,
         help="Number of coarse column cells",
     )
     parser.add_argument(
@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument(
         "--coarse-path-min-coverage",
         type=float,
-        default=0,
+        default=0.3,
         help="Coarse path min coverage",
     )
     parser.add_argument(
@@ -51,7 +51,7 @@ def parse_args():
     parser.add_argument(
         "--num-maps",
         type=int,
-        default=10,
+        default=1,
         help="Number of maps to generate",
     )
     parser.add_argument(

@@ -16,7 +16,6 @@ def parse_args():
 
 def main(args):
     map = np.loadtxt(args.map_file, delimiter=",")
-    print(map)
     plt.imshow(map, cmap="gray")
     plt.show()
 

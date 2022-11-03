@@ -29,7 +29,9 @@ def create_maze(
         min_path_width,
     )
 
-    return maze.astype(np.uint8)
+    sparse_maze = convert_to_sparse_maze(maze)
+
+    return sparse_maze.astype(np.uint8)
 
 
 def create_coarse_maze(
@@ -67,69 +69,64 @@ def calculate_path_coverage(maze: np.ndarray) -> float:
 def create_random_coarse_maze(
     num_coarse_row_cells: int, num_coarse_col_cells: int
 ) -> np.ndarray:
-    coarse_maze = np.ones((num_coarse_row_cells, num_coarse_col_cells), dtype=np.uint8)
+    maze = np.ones((num_coarse_row_cells, num_coarse_col_cells), dtype=np.uint8)
+    # backtracking maze is for checking cells that are at least once visted.
+    backtracking_maze = np.ones(
+        (num_coarse_row_cells, num_coarse_col_cells), dtype=np.uint8
+    )
 
     # always the left top cell is the start
     entry_row = 1
     entry_col = 0
-    coarse_maze[entry_row, entry_col] = 0
+    maze[entry_row, entry_col] = 0
+    backtracking_maze[entry_row, entry_col] = 0
     cursor = (entry_row, entry_col)
     backtracking_stack = [cursor]
 
     # then there is only one possible step
-    coarse_maze[entry_row, entry_col + 1] = 0
+    maze[entry_row, entry_col + 1] = 0
+    backtracking_maze[entry_row, entry_col + 1] = 0
     cursor = (entry_row, entry_col + 1)
-
-    # the backtrack point is used to avoid re-selecting the backtracked cells.
-    backtrack_point = (-1, -1)
 
     ### CUROSOR DOES NOT POINT A CELL IN THE BACKTRACKING STACK
     while True:
-        prev_cell = backtracking_stack[-1]
         # TODO: prevernt infinite loop
-        next_cell = select_next_random_cell(
-            coarse_maze, cursor[0], cursor[1], backtrack_point[0], backtrack_point[1]
-        )
-
+        next_cell = select_next_random_cell(backtracking_maze, cursor[0], cursor[1])
         # reset the backtrack point after using it to prevent infinite loop
-        backtrack_point = (-1, -1)
 
         if next_cell is not None:
-            coarse_maze[next_cell[0], next_cell[1]] = 0
+            maze[next_cell[0], next_cell[1]] = 0
+            backtracking_maze[next_cell[0], next_cell[1]] = 0
             backtracking_stack.append(cursor)
             cursor = next_cell
 
-            if is_on_the_map_boundary(coarse_maze, cursor[0], cursor[1]):
+            if is_on_the_map_boundary(maze, cursor[0], cursor[1]):
                 # cursor is on the edge of the map
                 # this will be the exit point
                 break
         else:
-            # DFS fail
-            # backtrack
+            # DFS fail, backtrack
 
             if len(backtracking_stack) == 0:
                 raise Exception("Failed to create a coarse maze. DFS fail.")
 
-            backtrack_point = (cursor[0], cursor[1])
-            coarse_maze[cursor[0], cursor[1]] = 1
+            # only unvisit the maze cell, not the backtracking maze cell.
+            maze[cursor[0], cursor[1]] = 1
             cursor = backtracking_stack.pop()
 
-    return coarse_maze
+    return maze
 
 
 def select_next_random_cell(
     maze: np.ndarray,
     current_row: int,
     current_col: int,
-    exclude_row: int = -1,
-    exclude_col: int = -1,
 ) -> tuple[int, int]:
     """Select a random cell that is not visited, not adjacent to the visited cells, and not at the boundary"""
 
     def is_cell_valid(row: int, col: int) -> bool:
         return (
-            (row != exclude_row and col != exclude_col)
-            and is_in_the_map(maze, row, col)
+            is_in_the_map(maze, row, col)
             and is_not_visited(maze, row, col)
             and is_not_adjacent_to_visited(maze, current_row, current_col, row, col)
         )
@@ -233,15 +230,6 @@ def iteratively_attach_walls(
 
     maze_A, maze_B = split_components(maze, labeled_maze)
 
-    # fig, axs = plt.subplots(1, 3)
-    # axs[0].set_title("maze")
-    # axs[1].set_title("maze_A")
-    # axs[2].set_title("maze_B")
-    # axs[0].imshow(maze, cmap="gray")
-    # axs[1].imshow(maze_A, cmap="gray")
-    # axs[2].imshow(maze_B, cmap="gray")
-    # plt.show()
-
     iter_count = 0
     while iter_count < steps:
         maze_A, maze_B = add_random_wall_point(
@@ -330,3 +318,14 @@ def add_random_wall_point(
         copied_maze_B[random_near_boudary_point[0], random_near_boudary_point[1]] = 1
 
     return copied_maze_A, copied_maze_B
+
+
+def convert_to_sparse_maze(maze: np.ndarray) -> np.ndarray:
+    negative_maze = np.ones_like(maze) - maze
+    near_boundary_points = select_near_boundary_points(negative_maze)
+    sparse_maze = np.zeros_like(maze)
+
+    for point in near_boundary_points:
+        sparse_maze[point[0], point[1]] = 1
+
+    return sparse_maze
