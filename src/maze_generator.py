@@ -2,6 +2,7 @@ import random
 import numpy as np
 from scipy import ndimage
 from matplotlib import pyplot as plt
+import time
 
 
 def create_maze(
@@ -13,14 +14,21 @@ def create_maze(
     max_coarse_map_trial: int,
     wall_attach_steps: int,
     min_path_width: int,
+    verbose: bool,
 ) -> np.ndarray:
+
+    coarse_maze_start = time.time()
     coarse_maze = create_coarse_maze(
         num_coarse_row_cells,
         num_coarse_col_cells,
         coarse_path_min_coverage,
         max_coarse_map_trial,
     )
+    coarse_maze_end = time.time()
+    if verbose:
+        print(f"Coarse maze created in {coarse_maze_end - coarse_maze_start} seconds.")
 
+    fine_maze_start = time.time()
     maze = attach_walls_to_coarse_maze(
         coarse_maze,
         num_fine_row_cells,
@@ -28,6 +36,9 @@ def create_maze(
         wall_attach_steps,
         min_path_width,
     )
+    fine_maze_end = time.time()
+    if verbose:
+        print(f"Fine maze created in {fine_maze_end - fine_maze_start} seconds.")
 
     sparse_maze = convert_to_sparse_maze(maze)
 

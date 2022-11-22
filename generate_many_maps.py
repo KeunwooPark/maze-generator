@@ -51,7 +51,7 @@ def parse_args():
     parser.add_argument(
         "--num-maps",
         type=int,
-        default=1,
+        default=10,
         help="Number of maps to generate",
     )
     parser.add_argument(
@@ -60,12 +60,18 @@ def parse_args():
         default="results",
         help="Output directory",
     )
+    parser.add_argument(
+        "--verbose",
+        type=bool,
+        default=True,
+        help="Show time performance",
+    )
     return parser.parse_args()
 
 
 def main(args):
     pathlib.Path(args.output_dir).mkdir(parents=True, exist_ok=True)
-
+    print("Generating maps...")
     for i in range(args.num_maps):
         maze = create_maze(
             args.num_coarse_row_cells,
@@ -76,6 +82,7 @@ def main(args):
             args.max_coarse_map_trial,
             args.wall_attach_steps,
             args.min_path_width,
+            args.verbose,
         )
         np.savetxt(f"{args.output_dir}/maze_{i}.csv", maze, fmt="%i", delimiter=",")
         print(f"Generated maze_{i}.csv")
