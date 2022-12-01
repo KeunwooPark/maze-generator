@@ -11,6 +11,7 @@ def create_maze(
     num_fine_row_cells: int,
     num_fine_col_cells: int,
     coarse_path_min_coverage: float,
+    coarse_path_max_coverage: float,
     max_coarse_map_trial: int,
     wall_attach_steps: int,
     min_path_width: int,
@@ -22,6 +23,7 @@ def create_maze(
         num_coarse_row_cells,
         num_coarse_col_cells,
         coarse_path_min_coverage,
+        coarse_path_max_coverage,
         max_coarse_map_trial,
     )
     coarse_maze_end = time.time()
@@ -49,6 +51,7 @@ def create_coarse_maze(
     num_coarse_row_cells: int,
     num_coarse_col_cells: int,
     coarse_path_min_coverage: float,
+    coarse_path_max_coverage: float,
     max_coarse_map_trial: int,
 ):
     coarse_maze = create_random_coarse_maze(num_coarse_col_cells, num_coarse_row_cells)
@@ -58,7 +61,11 @@ def create_coarse_maze(
 
     no_limit = max_coarse_map_trial == -1
 
-    while path_coverage < coarse_path_min_coverage and (
+    is_out_of_coverage_limits = (path_coverage < coarse_path_min_coverage) or (
+        path_coverage > coarse_path_max_coverage
+    )
+
+    while is_out_of_coverage_limits and (
         no_limit or coarse_map_trial_count < max_coarse_map_trial
     ):
         coarse_maze = create_random_coarse_maze(
@@ -66,6 +73,10 @@ def create_coarse_maze(
         )
         path_coverage = calculate_path_coverage(coarse_maze)
         coarse_map_trial_count += 1
+
+        is_out_of_coverage_limits = (path_coverage < coarse_path_min_coverage) or (
+            path_coverage > coarse_path_max_coverage
+        )
 
     if path_coverage < coarse_path_min_coverage:
         raise Exception("Failed to create a coarse maze.")

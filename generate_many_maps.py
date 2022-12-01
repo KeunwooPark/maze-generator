@@ -31,6 +31,12 @@ def parse_args():
         help="Coarse path min coverage",
     )
     parser.add_argument(
+        "--coarse-path-max-coverage",
+        type=float,
+        default=0.7,
+        help="Coarse path min coverage",
+    )
+    parser.add_argument(
         "--max-coarse-map-trial",
         type=int,
         default=-1,
@@ -45,13 +51,13 @@ def parse_args():
     parser.add_argument(
         "--min-path-width",
         type=int,
-        default=2,
+        default=3,
         help="Min path width",
     )
     parser.add_argument(
         "--num-maps",
         type=int,
-        default=10,
+        default=1,
         help="Number of maps to generate",
     )
     parser.add_argument(
@@ -79,6 +85,7 @@ def main(args):
             args.num_fine_row_cells,
             args.num_fine_col_cells,
             args.coarse_path_min_coverage,
+            args.coarse_path_max_coverage,
             args.max_coarse_map_trial,
             args.wall_attach_steps,
             args.min_path_width,
