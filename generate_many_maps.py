@@ -43,10 +43,10 @@ def parse_args():
         help="Max coarse map trial. -1 for no limit",
     )
     parser.add_argument(
-        "--wall-attach-steps",
+        "--coarse-cell-fill-factor",
         type=int,
-        default=5000,
-        help="Wall attach steps",
+        default=0.5,
+        help="How densly to fill the coarse cells",
     )
     parser.add_argument(
         "--min-path-width",
@@ -87,7 +87,7 @@ def main(args):
             args.coarse_path_min_coverage,
             args.coarse_path_max_coverage,
             args.max_coarse_map_trial,
-            args.wall_attach_steps,
+            args.coarse_cell_fill_factor,
             args.min_path_width,
             args.verbose,
         )

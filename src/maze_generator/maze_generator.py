@@ -13,7 +13,7 @@ def create_maze(
     coarse_path_min_coverage: float,
     coarse_path_max_coverage: float,
     max_coarse_map_trial: int,
-    wall_attach_steps: int,
+    coarse_cell_fill_factor: float,
     min_path_width: int,
     verbose: bool,
 ) -> np.ndarray:
@@ -35,7 +35,7 @@ def create_maze(
         coarse_maze,
         num_fine_row_cells,
         num_fine_col_cells,
-        wall_attach_steps,
+        coarse_cell_fill_factor,
         min_path_width,
     )
     fine_maze_end = time.time()
@@ -218,12 +218,12 @@ def attach_walls_to_coarse_maze(
     coarse_maze: np.ndarray,
     num_fine_row_cells: int,
     num_fine_col_cells: int,
-    wall_attach_steps: int,
+    corse_cell_fill_factor: float,
     min_path_width: int,
 ) -> np.ndarray:
     maze = convert_to_fine_maze(coarse_maze, num_fine_row_cells, num_fine_col_cells)
     maze = cross_connect_components(maze)
-    maze = iteratively_attach_walls(maze, wall_attach_steps, min_path_width)
+    maze = iteratively_attach_walls(maze, corse_cell_fill_factor, min_path_width)
     return maze
 
 
@@ -245,23 +245,35 @@ def cross_connect_components(maze: np.ndarray) -> np.ndarray:
 
 
 def iteratively_attach_walls(
-    maze: np.ndarray, steps: int, min_path_width: int
+    maze: np.ndarray, coarse_cell_fill_factor: float, min_path_width: int
 ) -> np.ndarray:
 
     labeled_maze, num_features = ndimage.label(maze)
 
     maze_A, maze_B = split_components(maze, labeled_maze)
+    max_iter = calculate_maximum_iterations(maze)
+    initial_num_cells = np.sum(maze)
+    coarse_cell_fill_ratio = 0
 
     iter_count = 0
-    while iter_count < steps:
+    while iter_count < max_iter and coarse_cell_fill_ratio < coarse_cell_fill_factor:
         maze_A, maze_B = add_random_wall_point(
             maze_A, maze_B, min_path_width=min_path_width
         )
+        num_added_cells = np.sum(maze_A) + np.sum(maze_B) - initial_num_cells
+        coarse_cell_fill_ratio = num_added_cells / max_iter
         iter_count += 1
 
     new_maze = maze_A + maze_B
 
     return new_maze
+
+
+def calculate_maximum_iterations(coarse_maze: np.ndarray) -> float:
+    num_rows, num_cols = coarse_maze.shape
+    num_cells = num_rows * num_cols
+    num_filled_cells = np.sum(coarse_maze)
+    return num_cells - num_filled_cells
 
 
 def split_components(
