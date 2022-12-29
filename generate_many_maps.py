@@ -9,13 +9,13 @@ def parse_args():
     parser.add_argument(
         "--num-coarse-row-cells",
         type=int,
-        default=10,
+        default=7,
         help="Number of coarse row cells",
     )
     parser.add_argument(
         "--num-coarse-col-cells",
         type=int,
-        default=10,
+        default=7,
         help="Number of coarse column cells",
     )
     parser.add_argument(
@@ -28,13 +28,13 @@ def parse_args():
         "--coarse-path-min-coverage",
         type=float,
         default=0.3,
-        help="Coarse path min coverage",
+        help="Coarse path min coverage (min: 0, max: 1)",
     )
     parser.add_argument(
         "--coarse-path-max-coverage",
         type=float,
         default=0.7,
-        help="Coarse path min coverage",
+        help="Coarse path min coverage (min: 0, max: 1)",
     )
     parser.add_argument(
         "--max-coarse-map-trial",
@@ -44,14 +44,14 @@ def parse_args():
     )
     parser.add_argument(
         "--coarse-cell-fill-factor",
-        type=int,
+        type=float,
         default=0.5,
-        help="How densly to fill the coarse cells",
+        help="How densly to fill the coarse cells (min: 0, max: 1)",
     )
     parser.add_argument(
         "--min-path-width",
         type=int,
-        default=3,
+        default=2,
         help="Min path width",
     )
     parser.add_argument(
@@ -69,7 +69,7 @@ def parse_args():
     parser.add_argument(
         "--verbose",
         type=bool,
-        default=True,
+        default=False,
         help="Show time performance",
     )
     return parser.parse_args()
